@@ -15,6 +15,7 @@ services:
     container_name: elasticsearch
     image: elasticsearch:8.11.1
     environment:
+      - TZ=Asia/Almaty  # Astana uses Asia/Almaty timezone
       - http.max_content_length=500mb
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -28,8 +29,6 @@ services:
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 30s
@@ -60,6 +59,7 @@ services:
       - ./data:/app/data
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - TZ=Asia/Almaty
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -78,6 +78,8 @@ services:
       retries: 5
     networks:
       - aips-network
+    environment:
+      - TZ=Asia/Almaty
 
   redisinsight:
     container_name: aips-redisinsight
@@ -86,6 +88,7 @@ services:
       - "5540:5540"
     environment:
       - REDIS_URI=redis://redis:6379
+      - TZ=Asia/Almaty
     volumes:
       - redisinsight:/db
     depends_on:
