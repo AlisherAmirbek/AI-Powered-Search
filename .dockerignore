@@ -1,0 +1,39 @@
+# Ignore data directories
+data/
+**/data/
+/data/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+
+# Environment directories
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE directories
+.idea/
+.vscode/
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+.cursorrules

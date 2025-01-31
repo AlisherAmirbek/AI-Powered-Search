@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{% if selected_doc %}{{ selected_doc.title }}{% else %}Search{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+	{% if selected_doc %}
+	<!-- Document View -->
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item"><a href="/search?q={{ query }}">Back to Search</a></li>
+			<li class="breadcrumb-item active">Document</li>
+		</ol>
+	</nav>
+
+	<div class="card">
+		<div class="card-body">
+			<h1 class="card-title">{{ selected_doc.title }}</h1>
+			<p class="text-muted small">Document ID: {{ selected_doc.id }}</p>
+			<p class="card-text">{{ selected_doc.body }}</p>
+			<div class="text-muted mt-3">
+				{% if selected_doc.score is not none %}
+				<small>Score: {{ "%.3f"|format(selected_doc.score) }}</small>
+				{% endif %}
+				<small class="ml-3">Source: {{ selected_doc.source }}</small>
+			</div>
+		</div>
+	</div>
+	{% else %}
+	<!-- Search View -->
+	<h1 class="mb-4">Document Search</h1>
+
+	<form method="get" action="/search" class="mb-4">
+		<div class="input-group">
+			<input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Enter your search query..." autofocus>
+			<button type="submit" class="btn btn-primary">Search</button>
+		</div>
+	</form>
+
+	{% if results %}
+	<div class="results">
+		<p class="text-muted">
+			Found {{ total }} results (Page {{ page }} of {{ total_pages }})
+			<span class="ms-2">•</span>
+			<span class="ms-2">{{ "%.2f"|format(query_time_ms) }} ms</span>
+		</p>
+
+		{% for result in results %}
+		<div class="card mb-3 shadow-sm">
+			<div class="card-body">
+				<h5 class="card-title">{{ result.title }}</h5>
+				<p class="card-text text-muted small">Document ID: {{ result.id }}</p>
+				<p class="card-text">
+					{{ result.body[:300] }}...
+					<a href="/search?q={{ query }}&doc_id={{ result.id }}" class="btn btn-link">Read more</a>
+				</p>
+				<div class="d-flex justify-content-between align-items-center">
+					<small class="text-muted">Score: {{ "%.3f"|format(result.score) }}</small>
+					<small class="text-muted">Source: {{ result.source }}</small>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+
+		{% if total_pages > 1 %}
+		<nav aria-label="Search results pages">
+			<ul class="pagination justify-content-center">
+				{% if page > 1 %}
+				<li class="page-item">
+					<a class="page-link" href="?q={{ query }}&page={{ page-1 }}">&laquo; Previous</a>
+				</li>
+				{% endif %}
+
+				{% if page < total_pages %} <li class="page-item">
+					<a class="page-link" href="?q={{ query }}&page={{ page+1 }}">Next &raquo;</a>
+					</li>
+					{% endif %}
+			</ul>
+		</nav>
+		{% endif %}
+	</div>
+	{% elif query %}
+	<div class="alert alert-info">No results found for "{{ query }}".</div>
+	{% endif %}
+	{% endif %}
+</div>
+
+<script>
+	function validateSearch(event) {
+		const query = event.target.q.value;
+		if (query.includes('/')) {
+			alert('Search query cannot contain "/"');
+			return false;
+		}
+		return true;
+	}
+
+	function toggleText(button) {
+		const cardBody = button.closest('.card-body');
+		const shortText = cardBody.querySelector('.short-text');
+		const fullText = cardBody.querySelector('.full-text');
+
+		if (shortText.style.display !== 'none') {
+			shortText.style.display = 'none';
+			fullText.style.display = 'inline';
+			button.textContent = 'Less';
+		} else {
+			shortText.style.display = 'inline';
+			fullText.style.display = 'none';
+			button.textContent = 'More';
+		}
+	}
+</script>
+{% endblock %}

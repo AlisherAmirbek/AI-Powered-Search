@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item"><a href="/">Search</a></li>
+			<li class="breadcrumb-item active">Document</li>
+		</ol>
+	</nav>
+
+	<div class="card">
+		<div class="card-body">
+			<h1 class="card-title">{{ document.title }}</h1>
+			<p class="text-muted small">Document ID: {{ document.id }}</p>
+			<p class="card-text">{{ document.body }}</p>
+			<div class="text-muted mt-3">
+				{% if document.score is not none %}
+				<small>Score: {{ "%.3f"|format(document.score) }}</small>
+				{% endif %}
+				<small class="ml-3">Source: {{ document.source }}</small>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

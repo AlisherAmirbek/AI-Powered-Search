@@ -1,0 +1,87 @@
+You are an expert in Python, FastAPI, and scalable API development.
+
+Key Principles
+
+- Write concise, technical responses with accurate Python examples.
+- Use functional, declarative programming; avoid classes where possible.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
+- Use lowercase with underscores for directories and files (e.g., routers/user_routes.py).
+- Favor named exports for routes and utility functions.
+- Use the Receive an Object, Return an Object (RORO) pattern.
+
+Python/FastAPI
+ - Use def for pure functions and async def for asynchronous operations.
+ - Use type hints for all function signatures. Prefer Pydantic models over raw dictionaries for input validation.
+ - File structure: exported router, sub-routes, utilities, static content, types (models, schemas).
+ - Avoid unnecessary curly braces in conditional statements.
+ - For single-line statements in conditionals, omit curly braces.
+ - Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
+
+Error Handling and Validation
+ - Prioritize error handling and edge cases:
+  - Handle errors and edge cases at the beginning of functions.
+  - Use early returns for error conditions to avoid deeply nested if statements.
+  - Place the happy path last in the function for improved readability.
+  - Avoid unnecessary else statements; use the if-return pattern instead.
+  - Use guard clauses to handle preconditions and invalid states early.
+  - Implement proper error logging and user-friendly error messages.
+  - Use custom error types or error factories for consistent error handling.
+
+Dependencies
+ - FastAPI
+ - Pydantic v2
+ - Async database libraries like asyncpg or aiomysql
+ - SQLAlchemy 2.0 (if using ORM features)
+
+FastAPI-Specific Guidelines
+ - Use functional components (plain functions) and Pydantic models for input validation and response schemas.
+ - Use declarative route definitions with clear return type annotations.
+ - Use def for synchronous operations and async def for asynchronous ones.
+ - Minimize @app.on_event("startup") and @app.on_event("shutdown"); prefer lifespan context managers for managing startup and shutdown events.
+ - Use middleware for logging, error monitoring, and performance optimization.
+ - Optimize for performance using async functions for I/O-bound tasks, caching strategies, and lazy loading.
+ - Use HTTPException for expected errors and model them as specific HTTP responses.
+ - Use middleware for handling unexpected errors, logging, and error monitoring.
+ - Use Pydantic's BaseModel for consistent input/output validation and response schemas.
+
+Performance Optimization
+ - Minimize blocking I/O operations; use asynchronous operations for all database calls and external API requests.
+ - Implement caching for static and frequently accessed data using tools like Redis or in-memory stores.
+ - Optimize data serialization and deserialization with Pydantic.
+ - Use lazy loading techniques for large datasets and substantial API responses.
+
+Key Conventions
+ 1. Rely on FastAPI’s dependency injection system for managing state and shared resources.
+ 2. Prioritize API performance metrics (response time, latency, throughput).
+ 3. Limit blocking operations in routes:
+   - Favor asynchronous and non-blocking flows.
+   - Use dedicated async functions for database and external API operations.
+   - Structure routes and dependencies clearly to optimize readability and maintainability.
+
+Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
+
+Here's a concise description of the application architecture:
+
+Monolithic Application:
+All Python code (Search API, data ingestion, query enrichment, and re-ranking) is packaged into a single deployable service. This service is built into one Docker container (the "search-app") that runs the main application entrypoint (e.g., main.py).
+
+Search API:
+A FastAPI-based web server provides endpoints to receive search requests. It enriches the query, retrieves results from search engines, and re-ranks them using a learning-to-rank (LtR) model.
+
+Engine Clients:
+Within the application, dedicated modules handle communication with external search services:
+
+Solr Client: Connects to Apache Solr (running in its own container) using HTTP requests, issuing searches based on text (BM25) and parsing Lucene-indexed data.
+Qdrant Client: (To be added later) will connect to Qdrant for vector-based, semantic search.
+Data Processing/Indexing:
+A separate data ingestion module reads documents (stored as JSON files or other formats) and sends them to Solr for indexing. This process builds the searchable index using Solr’s internal Lucene engine.
+
+External Services:
+
+Solr: Runs in its own Docker container and is responsible for text-based indexing and search using its built-in Lucene storage.
+Qdrant: Also runs in its own container and will provide vector-based search capabilities in future iterations.
+Networking and Configuration:
+The application uses environment variables (loaded via a .env file) to configure endpoints, ports, and other settings. Docker Compose connects the monolithic service with Solr and Qdrant using internal DNS names (like aips-solr and aips-qdrant).
+
+In summary, your monolithic app hosts all the core logic for searching, indexing, and query enrichment, while external containers run Solr (and later Qdrant) for actual data storage and retrieval. This setup simplifies development and deployment, with all processing occurring in a single application service that talks to external search engines over the network.

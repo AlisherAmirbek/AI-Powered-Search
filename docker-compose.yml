@@ -1,0 +1,104 @@
+name: aips
+services:
+  # Commenting out Solr temporarily
+  # solr:
+  #   image: solr:9.3
+  #   ports:
+  #     - "8983:8983"
+  #   volumes:
+  #     - solr_data:/var/solr
+  #   command:
+  #     - solr-precreate
+  #     - search_core
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.11.1
+    environment:
+      - http.max_content_length=500mb
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Add CORS settings for Elasticvue
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:8080,http://127.0.0.1:8080
+      - http.cors.allow-headers=X-Requested-With,Content-Type,Content-Length,Authorization
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - aips-network
+
+  elasticvue:
+    container_name: aips-elasticvue
+    image: cars10/elasticvue
+    ports:
+      - "8080:8080"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - aips-network
+
+  search-app:
+    container_name: aips-search-app
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    ports:
+      - "2345:2345"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - aips-network
+
+  redis:
+    container_name: aips-redis
+    image: redis:7.2.7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aips-network
+
+  redisinsight:
+    container_name: aips-redisinsight
+    image: redislabs/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      - REDIS_URI=redis://redis:6379
+    volumes:
+      - redisinsight:/db
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - aips-network
+
+networks:
+  aips-network:
+    driver: bridge
+
+volumes:
+  # solr_data:
+  elasticsearch_data:
+  redisinsight:
